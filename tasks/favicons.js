@@ -117,26 +117,28 @@ module.exports = function(grunt) {
 			var contents = (grunt.file.exists(options.html)) ? grunt.file.read(options.html) : "";
 			var $;
 			$ = cheerio.load(contents);
-			if (contents !== "" && !options.truncateHTML) {
-				// Removing exists favicon from HTML
-				grunt.log.writeln('Removing exists favicon from HTML');
-				try {
-					$('link[rel="shortcut icon"]').remove();
-					$('link[rel="icon"]').remove();
-					$('link[rel="apple-touch-icon"]').remove();
-					$('link[rel="apple-touch-icon-precomposed"]').remove();
-					$('meta').each(function(i, elem) {
-						var name = $(this).attr('name');
-						if(name && (name === 'msapplication-TileImage' ||
-									name === 'msapplication-TileColor' ||
-									name.indexOf('msapplication-square') >= 0)) {
-							$(this).remove();
-						}
-					});
-					html = $.html().replace(/(?:(?:^|\n)\s+|\s+(?:$|\n))/g,'').replace(/\s+/g,' ');
-				}catch(e_){
-					// cheerio не работает!!!
-					grunt.log.errorlns('1--> cheerio не работает!!!');
+			if(path.extname(options.html) != ".pug") {
+				if (contents !== "" && !options.truncateHTML) {
+					// Removing exists favicon from HTML
+					grunt.log.writeln('Removing exists favicon from HTML');
+					try {
+						$('link[rel="shortcut icon"]').remove();
+						$('link[rel="icon"]').remove();
+						$('link[rel="apple-touch-icon"]').remove();
+						$('link[rel="apple-touch-icon-precomposed"]').remove();
+						$('meta').each(function(i, elem) {
+							var name = $(this).attr('name');
+							if(name && (name === 'msapplication-TileImage' ||
+										name === 'msapplication-TileColor' ||
+										name.indexOf('msapplication-square') >= 0)) {
+								$(this).remove();
+							}
+						});
+						html = $.html().replace(/(?:(?:^|\n)\s+|\s+(?:$|\n))/g,'').replace(/\s+/g,' ');
+					}catch(e_){
+						// cheerio не работает!!!
+						grunt.log.errorlns('1--> cheerio не работает!!!');
+					}
 				}
 			}
 			if(html === '') {
@@ -387,8 +389,8 @@ module.exports = function(grunt) {
 
 				// Append icons to <HEAD>
 				if (needHTML) {
-					grunt.log.write('Updating HTML... ');
-
+					
+					grunt.log.write('Generate HTML... ');
 					var timestamp = '?ts=' + new Date().getTime().toString();
 
 					var elements = "";
@@ -437,6 +439,7 @@ module.exports = function(grunt) {
 						const regex = /^(?:\s+)?<(meta|link)\s+(.*")(?:\s+)?\/?>/gim;
 						const subst = `$1($2)`;
 						elements = elements.replace(regex, subst);
+						grunt.log.ok();
 					}
 					//$ = cheerio.load(contents);
 					// Windows 8 tile. In HTML version background color will be as meta-tag
@@ -444,7 +447,6 @@ module.exports = function(grunt) {
 						try {
 							if($('head').length > 0) {
 								$("head").append(elements);
-								grunt.log.writeln('HEAD!!!!!!');
 							}
 						}catch(E_){
 							grunt.log.writeln([" "]);
@@ -452,25 +454,31 @@ module.exports = function(grunt) {
 							grunt.log.writeln([" "]);
 							$.root().append(elements);
 						}
+						grunt.log.ok();
 					}
 					
 					var out = $.html();
 					// Hack for php tags
 					if (path.extname(options.html) === ".php") {
 						out = out.replace(/&lt;\?/gi, '<?').replace(/\?&gt;/gi, '?>');
+						grunt.log.ok();
 					}
 					// Saving HTML
 					// pug
 					if (path.extname(options.html) === ".pug") {
+						grunt.log.write('Updating PUG... ');
 						const regex = /^\s+?<(meta|link)\s+(.*")(?:\s+)?\/?>/gim;
 						const subst = `$1($2)`;
 						elements = elements.replace(regex, subst);
+						grunt.log.ok();
 						grunt.file.write(options.html, elements);
 					}else{
 						// html, php
+						grunt.log.write('Updating HTML... ');
+						grunt.log.ok();
 						grunt.file.write(options.html, out);
 					}
-					grunt.log.ok();
+					//grunt.log.ok();
 				}
 
 				// Cleanup
