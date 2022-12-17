@@ -394,12 +394,12 @@ module.exports = function(grunt) {
 					var elements = "";
 
 					if (options.windowsTile) {
-						elements += options.indent + "<meta name=\"msapplication-square70x70logo\" content=\"" + options.HTMLPrefix + "windows-tile-70x70.png" + (options.timestamp ? timestamp : '') + "\"/>\n";
-						elements += options.indent + "<meta name=\"msapplication-square150x150logo\" content=\"" + options.HTMLPrefix + "windows-tile-150x150.png" + (options.timestamp ? timestamp : '') + "\"/>\n";
-						elements += options.indent + "<meta name=\"msapplication-square310x310logo\" content=\"" + options.HTMLPrefix + "windows-tile-310x310.png" + (options.timestamp ? timestamp : '') + "\"/>\n";
-						elements += options.indent + "<meta name=\"msapplication-TileImage\" content=\"" + options.HTMLPrefix + "windows-tile-144x144.png" + (options.timestamp ? timestamp : '') + "\"/>\n";
+						elements += options.indent + "<meta name=\"msapplication-square70x70logo\" content=\"" + options.HTMLPrefix + "windows-tile-70x70.png" + (options.timestamp ? timestamp : '') + "\">\n";
+						elements += options.indent + "<meta name=\"msapplication-square150x150logo\" content=\"" + options.HTMLPrefix + "windows-tile-150x150.png" + (options.timestamp ? timestamp : '') + "\">\n";
+						elements += options.indent + "<meta name=\"msapplication-square310x310logo\" content=\"" + options.HTMLPrefix + "windows-tile-310x310.png" + (options.timestamp ? timestamp : '') + "\">\n";
+						elements += options.indent + "<meta name=\"msapplication-TileImage\" content=\"" + options.HTMLPrefix + "windows-tile-144x144.png" + (options.timestamp ? timestamp : '') + "\">\n";
 						if (options.tileColor !== "none") {
-							elements += options.indent + "<meta name=\"msapplication-TileColor\" content=\"" + options.tileColor + "\"/>\n";
+							elements += options.indent + "<meta name=\"msapplication-TileColor\" content=\"" + options.tileColor + "\">\n";
 						}
 					}
 					// iOS
@@ -419,39 +419,39 @@ module.exports = function(grunt) {
 
 					// Coast browser
 					if (options.coast) {
-					  elements += options.indent + "<link rel=\"icon\" sizes=\"228x228\" href=\"" + options.HTMLPrefix + "coast-icon-228x228.png" + (options.timestamp ? timestamp : '') + "\" />\n";
+					  elements += options.indent + "<link rel=\"icon\" sizes=\"228x228\" href=\"" + options.HTMLPrefix + "coast-icon-228x228.png" + (options.timestamp ? timestamp : '') + "\">\n";
 					}
 
 					// Android Homescreen app
 					if (options.androidHomescreen) {
-					  elements += options.indent + "<meta name=\"mobile-web-app-capable\" value=\"yes\" />\n";
-					  elements += options.indent + "<link rel=\"icon\" sizes=\"192x192\" href=\"" + options.HTMLPrefix + "homescreen-192x192.png" + (options.timestamp ? timestamp : '') + "\" />\n";
+					  elements += options.indent + "<meta name=\"mobile-web-app-capable\" value=\"yes\">\n";
+					  elements += options.indent + "<link rel=\"icon\" sizes=\"192x192\" href=\"" + options.HTMLPrefix + "homescreen-192x192.png" + (options.timestamp ? timestamp : '') + "\">\n";
 					}
 
 					// Default
 					if (options.regular) {
-						elements += options.indent + "<link rel=\"shortcut icon\" href=\"" + options.HTMLPrefix + "favicon.ico\" />\n";
-						elements += options.indent + "<link rel=\"icon\" type=\"image/png\" sizes=\"64x64\" href=\"" + options.HTMLPrefix + "favicon.png" + (options.timestamp ? timestamp : '') + "\" />\n";
+						elements += options.indent + "<link rel=\"shortcut icon\" href=\"" + options.HTMLPrefix + "favicon.ico" + (options.timestamp ? timestamp : '') + "\">\n";
+						elements += options.indent + "<link rel=\"icon\" type=\"image/png\" sizes=\"64x64\" href=\"" + options.HTMLPrefix + "favicon.png" + (options.timestamp ? timestamp : '') + "\">\n";
 					}
 					if (path.extname(options.html) === ".pug") {
-						const regex = /^\s+?<(meta|link)\s+(.*)\/?>/gim;
+						const regex = /^(?:\s+)?<(meta|link)\s+(.*")(?:\s+)?\/?>/gim;
 						const subst = `$1($2)`;
 						elements = elements.replace(regex, subst);
 					}
 					//$ = cheerio.load(contents);
 					// Windows 8 tile. In HTML version background color will be as meta-tag
-					try {
-						if(path.extname(options.html) === ".html"){
+					if(path.extname(options.html) === ".html"){
+						try {
 							if($('head').length > 0) {
 								$("head").append(elements);
 								grunt.log.writeln('HEAD!!!!!!');
 							}
+						}catch(E_){
+							grunt.log.writeln([" "]);
+							grunt.log.error('2--> cheerio не работает!!!');
+							grunt.log.writeln([" "]);
+							$.root().append(elements);
 						}
-					}catch(E_){
-						grunt.log.writeln([" "]);
-						grunt.log.error('2--> cheerio не работает!!!');
-						grunt.log.writeln([" "]);
-						$.root().append(elements);
 					}
 					
 					var out = $.html();
@@ -460,7 +460,16 @@ module.exports = function(grunt) {
 						out = out.replace(/&lt;\?/gi, '<?').replace(/\?&gt;/gi, '?>');
 					}
 					// Saving HTML
-					grunt.file.write(options.html, out);
+					// pug
+					if (path.extname(options.html) === ".pug") {
+						const regex = /^\s+?<(meta|link)\s+(.*")(?:\s+)?\/?>/gim;
+						const subst = `$1($2)`;
+						elements = elements.replace(regex, subst);
+						grunt.file.write(options.html, elements);
+					}else{
+						// html, php
+						grunt.file.write(options.html, out);
+					}
 					grunt.log.ok();
 				}
 
