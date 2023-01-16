@@ -24,6 +24,7 @@ module.exports = function(grunt) {
 			trueColor: false,
 			precomposed: true,
 			HTMLPrefix: "",
+			engine: 'convert',
 			appleTouchBackgroundColor: "auto", // none, auto, #color
 			appleTouchPadding: 15,
 			windowsTile: true,
@@ -47,6 +48,9 @@ module.exports = function(grunt) {
 			}
 		});
 
+		// Чем конвертируем
+		var engine = options.engine == "convert" ? "convert" : "magick";
+
 		// Execute external command
 		var execute = function(cmd) {
 			if (options.debug) {
@@ -57,7 +61,7 @@ module.exports = function(grunt) {
 
 		// Convert image with imagemagick
 		var convert = function(args) {
-			args.unshift("convert");
+			args.unshift(engine);
 			var ret = execute(args.join(" "));
 			if (ret.code === 127) {
 				return grunt.warn(
@@ -68,13 +72,13 @@ module.exports = function(grunt) {
 
 		// Generate background color for apple touch icons
 		var generateColor = function(src) {
-			var ret = execute("convert " + src + " -polaroid 180 -resize 1x1 -colors 1 -alpha off -unique-colors txt:- | grep -v ImageMagick | sed -n 's/.*\\(#[0-9A-F]*\\).*/\\1/p'");
+			var ret = execute(engine + " " + src + " -polaroid 180 -resize 1x1 -colors 1 -alpha off -unique-colors txt:- | grep -v ImageMagick | sed -n 's/.*\\(#[0-9A-F]*\\).*/\\1/p'");
 			return ret.stdout.trim();
 		};
 
 		// Generate background color for windows 8 tile
 		var generateTileColor = function(src) {
-			var ret = execute("convert " + src + " +dither -colors 1 -alpha off -unique-colors txt:- | grep -v ImageMagick | sed -n 's/.*\\(#[0-9A-F]*\\).*/\\1/p'");
+			var ret = execute(engine + " " + src + " +dither -colors 1 -alpha off -unique-colors txt:- | grep -v ImageMagick | sed -n 's/.*\\(#[0-9A-F]*\\).*/\\1/p'");
 			return ret.stdout.trim();
 		};
 
@@ -91,7 +95,7 @@ module.exports = function(grunt) {
 				]);
 			}
 			// icon padding
-			if (typeof(padding)==='number' && padding >= 0 && padding < 100) {
+			if (typeof(padding)==='number' && padding > 0 && padding < 100) {
 				var thumb = Math.round((100 - padding) * parseInt(size.split("x")[0], 10) / 100);
 				out = out.concat([
 					"-gravity",
@@ -178,6 +182,7 @@ module.exports = function(grunt) {
 
 				var additionalOpts = options.appleTouchBackgroundColor !== "none" ?
 					[ "-background", '"' + options.appleTouchBackgroundColor + '"', "-flatten"] : [];
+				
 				grunt.log.write('Resizing images for "' + source + '"... ');
 
 				if (options.regular) {
@@ -484,9 +489,15 @@ module.exports = function(grunt) {
 				// Cleanup
 				if (options.regular) {
 					['16x16', '32x32', '48x48'].forEach(function(size) {
-						grunt.log.write('Unlink file '+ size +'... ');
-						fs.unlinkSync(path.join(f.dest, size + '.png'));
-						grunt.log.ok();
+						if(fs.existsSync(path.join(f.dest, size + '.png')))
+						{
+							grunt.log.write('Unlink file '+ path.join(f.dest, size + '.png') +'... ');
+							fs.unlinkSync(path.join(f.dest, size + '.png'));
+							grunt.log.ok();
+						}else{
+							grunt.log.write('Error Unlink file '+ path.join(f.dest, size + '.png') +'... ');
+							grunt.log.error();
+						}
 					});
 				}
 			});
